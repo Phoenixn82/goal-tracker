@@ -174,6 +174,47 @@ body{background:var(--bg);color:var(--green);font-family:var(--fm);min-height:10
 .danger-btn:hover{color:var(--red);}
 .empty-state{padding:3rem;text-align:center;color:var(--green3);font-family:var(--fp);font-size:20px;letter-spacing:2px;}
 
+/* DETAIL PAGE */
+.back-btn{font-family:var(--fp);font-size:16px;color:var(--green3);background:transparent;
+  border:1px solid var(--bc);padding:6px 14px;border-radius:2px;cursor:pointer;
+  letter-spacing:2px;margin-bottom:14px;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.back-btn:hover{color:var(--green);border-color:var(--green);box-shadow:var(--glow-sm);}
+.detail-header{background:var(--bg2);border:1px solid var(--bc2);border-radius:3px;padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden;}
+.detail-header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.detail-cat{font-size:11px;letter-spacing:2px;margin-bottom:6px;font-family:var(--fp);}
+.detail-title{font-family:var(--fp);font-size:26px;color:var(--green);text-shadow:var(--glow-sm);letter-spacing:1px;line-height:1.2;margin-bottom:8px;}
+.complete-toggle{width:100%;padding:12px;font-family:var(--fp);font-size:18px;letter-spacing:2px;
+  border-radius:2px;cursor:pointer;margin-bottom:12px;transition:all .2s;}
+.ctog-done{background:var(--green4);border:1px solid var(--green);color:var(--green);box-shadow:var(--glow-sm);}
+.ctog-undone{background:transparent;border:1px solid var(--bc2);color:var(--green3);}
+.ctog-undone:hover{border-color:var(--green);color:var(--green);box-shadow:var(--glow-sm);}
+.detail-section{margin-bottom:16px;}
+.desc-textarea{width:100%;min-height:90px;background:var(--bg);color:var(--green);
+  border:1px solid var(--bc2);border-radius:2px;padding:10px 12px;
+  font-family:var(--fm);font-size:13px;resize:vertical;line-height:1.6;letter-spacing:.5px;}
+.desc-textarea:focus{outline:none;border-color:var(--green);box-shadow:var(--glow-sm);}
+.desc-textarea::placeholder{color:var(--green3);}
+.log-input-row{display:flex;gap:6px;margin-bottom:10px;}
+.log-input{flex:1;background:var(--bg);color:var(--green);border:1px solid var(--bc2);
+  border-radius:2px;padding:8px 12px;font-family:var(--fm);font-size:13px;}
+.log-input:focus{outline:none;border-color:var(--green);box-shadow:var(--glow-sm);}
+.log-input::placeholder{color:var(--green3);}
+.log-add-btn{font-family:var(--fp);font-size:16px;padding:8px 14px;background:transparent;
+  border:1px solid var(--green);color:var(--green);border-radius:2px;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .15s;}
+.log-add-btn:hover{background:var(--green4);box-shadow:var(--glow-sm);}
+.log-entry{display:flex;gap:10px;padding:8px 10px;border:1px solid var(--bc);border-radius:2px;margin-bottom:4px;background:var(--bg2);align-items:flex-start;}
+.log-ts{font-size:10px;color:var(--green3);letter-spacing:.5px;min-width:120px;flex-shrink:0;margin-top:2px;}
+.log-text{font-size:13px;color:var(--green2);flex:1;line-height:1.5;}
+.log-del{background:none;border:none;color:var(--green3);cursor:pointer;font-size:18px;padding:0 4px;transition:color .15s;flex-shrink:0;}
+.log-del:hover{color:var(--red);}
+.mtitle-link{background:none;border:none;color:var(--green);font-family:var(--fm);font-size:14px;
+  cursor:pointer;text-align:left;padding:0;line-height:1.4;transition:color .15s;}
+.mtitle-link:hover{color:var(--cyan);}
+.mtitle-link.struck{text-decoration:line-through;color:var(--green3);}
+.detail-arrow{background:none;border:none;color:var(--green3);font-size:22px;cursor:pointer;padding:0 2px;transition:color .15s;flex-shrink:0;align-self:center;}
+.detail-arrow:hover{color:var(--green);}
+@media(max-width:500px){.log-ts{min-width:0;width:100%;margin-bottom:3px;}.log-entry{flex-wrap:wrap;}}
+
 /* LEVEL UP OVERLAY */
 #lvl-up{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.93);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -382,7 +423,7 @@ let state = {
   goals:GOALS_DEFAULT, priusCount:0, drinksThisWeek:0, workoutsThisWeek:0,
   bonusXP:0, achievements:[], cleanWeeks:0,
 };
-let view="goals", catF="all", qF="ALL", editNote=null;
+let view="goals", catF="all", qF="ALL", editNote=null, detailId=null;
 
 function load() {
   try {
@@ -396,6 +437,8 @@ function load() {
       if (old) { state = {...state,...old, bonusXP:0, achievements:[], cleanWeeks:0}; save(); }
     }
   } catch(e){}
+  // ensure all goals have description + log fields
+  state.goals = state.goals.map(g => ({description:'', log:[], ...g}));
 }
 function save() { try{localStorage.setItem(SK,JSON.stringify(state));}catch(e){} }
 
@@ -483,13 +526,16 @@ function esc(s){ const d=document.createElement('div'); d.textContent=s; return 
 
 // ── RENDER ──
 function renderNav(){
+  document.getElementById('nav').style.display = detailId ? 'none' : 'flex';
   document.getElementById('nav').innerHTML = [
     ["goals","MISSIONS"],["schedule","WEEKLY OPS"],["trackers","INTEL"]
   ].map(([k,l])=>`<button class="nav-btn ${view===k?'active':''}" onclick="switchView('${k}')">${l}</button>`).join('');
 }
-function switchView(v){ view=v; renderNav(); render(); }
+function switchView(v){ view=v; detailId=null; renderNav(); render(); }
 function render(){
   const app = document.getElementById('app');
+  document.getElementById('nav').style.display = detailId ? 'none' : 'flex';
+  if(detailId !== null){ renderDetail(app); updateHUD(); return; }
   if(view==='goals') renderGoals(app);
   else if(view==='schedule') renderSchedule(app);
   else renderTrackers(app);
@@ -546,34 +592,95 @@ function renderGoals(app){
   } else {
     filtered.forEach(g=>{
       const cat=CATS.find(c=>c.id===g.cat);
-      const isEd=editNote===g.id;
+      const logCount=(g.log||[]).length;
       html+=`
         <div class="mission-item ${g.done?'done':''}" style="border-left-color:${cat?cat.color:'#888'}">
           <button class="mcheck ${g.done?'checked':''}" onclick="toggleGoal(event,${g.id})">${g.done?'✓':''}</button>
-          <div style="flex:1">
-            <div class="mtitle ${g.done?'struck':''}">${esc(g.title)}</div>
+          <div style="flex:1;min-width:0">
+            <button class="mtitle-link ${g.done?'struck':''}" onclick="goDetail(${g.id})">${esc(g.title)}</button>
             <div class="mmeta">
               <span class="tag tag-sec" style="border-color:${cat?cat.color+'66':'#333'};color:${cat?cat.color:'#888'}">${esc(cat?cat.label.toUpperCase():'?')}</span>
               <span class="tag ${g.quarter==='ALL'?'tag-og':'tag-q'}">${g.quarter==='ALL'?'ONGOING':g.quarter}</span>
               ${!g.done?`<span class="tag tag-xp">+100 XP</span>`:''}
+              ${logCount?`<span class="tag" style="background:#001533;border:1px solid #3399ff44;color:#3399ff88">${logCount} LOG</span>`:''}
             </div>
-            ${isEd?`
-              <div class="note-edit">
-                <input id="ni-${g.id}" value="${esc(g.notes||'')}" placeholder="ENTER LOG ENTRY..."/>
-                <button onclick="saveNote(${g.id})">SAVE</button>
-                <button onclick="cancelNote()">CANCEL</button>
-              </div>
-            `:`
-              <div style="margin-top:4px;display:flex;align-items:center;gap:6px">
-                ${g.notes?`<span class="mnote">// ${esc(g.notes)}</span>`:''}
-                <button class="note-btn" onclick="startNote(${g.id})">[${g.notes?'EDIT LOG':'ADD LOG'}]</button>
-              </div>
-            `}
           </div>
+          <button class="detail-arrow" onclick="goDetail(${g.id})">›</button>
         </div>`;
     });
   }
+  // Custom goal creation panel
+  html+=`
+    <div class="sec-hdr" style="margin-top:16px">// ADD CUSTOM MISSION</div>
+    <div class="panel" style="margin-bottom:8px">
+      <input id="new-title" class="log-input" style="width:100%;margin-bottom:8px" placeholder="Mission title..." />
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <select id="new-cat" style="flex:1;min-width:120px;background:var(--bg);color:var(--green);border:1px solid var(--bc2);border-radius:2px;padding:7px 10px;font-family:var(--fm);font-size:13px">
+          ${CATS.map(c=>`<option value="${c.id}" style="background:var(--bg)">${c.label}</option>`).join('')}
+        </select>
+        <select id="new-quarter" style="flex:1;min-width:80px;background:var(--bg);color:var(--green);border:1px solid var(--bc2);border-radius:2px;padding:7px 10px;font-family:var(--fm);font-size:13px">
+          ${["Q1","Q2","Q3","Q4","ALL"].map(q=>`<option value="${q}" style="background:var(--bg)">${q==='ALL'?'Ongoing':q}</option>`).join('')}
+        </select>
+      </div>
+      <button class="action-btn" style="margin-top:0" onclick="addCustomGoal()">[ + ADD MISSION ]</button>
+    </div>
+  `;
   html+=`<button class="danger-btn" onclick="resetGoals()">[ WIPE ALL PROGRESS ]</button>`;
+  app.innerHTML=html;
+}
+
+// ── DETAIL ──
+function renderDetail(app){
+  const g=state.goals.find(x=>x.id===detailId);
+  if(!g){ detailId=null; render(); return; }
+  const cat=CATS.find(c=>c.id===g.cat);
+  const color=cat?cat.color:'#888';
+  const logs=g.log||[];
+  const hasDesc=(g.description||'').trim().length>0;
+
+  let html=`
+    <button class="back-btn" onclick="goBack()">◄ BACK TO MISSIONS</button>
+    <div class="detail-header" style="border-left:4px solid ${color}">
+      <div class="detail-cat" style="color:${color}">${esc(cat?cat.label.toUpperCase():'UNKNOWN SECTOR')} // ${g.quarter==='ALL'?'ONGOING':g.quarter}</div>
+      <div class="detail-title">${esc(g.title)}</div>
+      <div class="mmeta" style="margin-top:8px">
+        ${g.done
+          ?`<span class="tag" style="background:#001a00;border:1px solid var(--green3);color:var(--green)">✓ MISSION COMPLETE</span>`
+          :`<span class="tag tag-xp">+100 XP ON COMPLETION</span>`}
+        ${logs.length?`<span class="tag" style="background:#001533;border:1px solid #3399ff44;color:#5599ff">${logs.length} LOG ENTRIES</span>`:''}
+      </div>
+    </div>
+
+    <button class="complete-toggle ${g.done?'ctog-done':'ctog-undone'}" onclick="toggleGoal(event,${g.id})">
+      ${g.done?'✓ MISSION COMPLETE — CLICK TO UNDO':'○ MARK MISSION AS COMPLETE'}
+    </button>
+
+    <div class="detail-section">
+      <div class="sec-hdr">// MISSION BRIEFING</div>
+      <textarea id="desc-input" class="desc-textarea" placeholder="Add context, objectives, resources, links...">${esc(g.description||'')}</textarea>
+      <button class="action-btn" style="margin-top:6px" onclick="saveDesc(${g.id})">[ SAVE BRIEFING ]</button>
+    </div>
+
+    <div class="detail-section">
+      <div class="sec-hdr">// MISSION LOG <span style="font-size:13px;color:var(--green3)">(${logs.length} entries)</span></div>
+      <div class="log-input-row">
+        <input id="log-input" class="log-input" placeholder="Log an update, note, or progress..." onkeydown="if(event.key==='Enter')addLog(${g.id})"/>
+        <button class="log-add-btn" onclick="addLog(${g.id})">+ LOG</button>
+      </div>
+      ${logs.length===0
+        ?`<div style="font-size:12px;color:var(--green3);padding:12px 0;letter-spacing:1px">// NO ENTRIES YET — START LOGGING PROGRESS</div>`
+        :logs.slice().reverse().map((entry,ri)=>{
+            const realIdx=logs.length-1-ri;
+            const d=new Date(entry.ts);
+            const ts=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+            return `<div class="log-entry">
+              <div class="log-ts">${ts}</div>
+              <div class="log-text">${esc(entry.text)}</div>
+              <button class="log-del" onclick="deleteLog(${g.id},${realIdx})" title="Delete">×</button>
+            </div>`;
+          }).join('')
+      }
+    </div>`;
   app.innerHTML=html;
 }
 
@@ -612,7 +719,7 @@ function renderTrackers(app){
 
   html+=`
     <div class="tracker-panel">
-      <div class="tlabel">// HOTWORX SESSIONS THIS WEEK</div>
+      <div class="tlabel">// HOTWORX SESSIONS THIS WEEK &nbsp;<span style="color:var(--green3);font-size:10px">+30 XP per session / −30 XP if removed</span></div>
       <div class="tracker-row">
         <div><span class="tval" style="color:${wc};text-shadow:0 0 10px ${wc}">${state.workoutsThisWeek}</span><span class="tof"> / 4 TARGET</span></div>
         <div class="cbtns">
@@ -625,7 +732,7 @@ function renderTrackers(app){
     </div>
 
     <div class="tracker-panel">
-      <div class="tlabel">// DRINKING DAYS THIS WEEK</div>
+      <div class="tlabel">// DRINKING DAYS THIS WEEK &nbsp;<span style="color:var(--green3);font-size:10px">−50 XP per day over limit / +100 XP clean week bonus</span></div>
       <div class="tracker-row">
         <div><span class="tval" style="color:${dc};text-shadow:0 0 10px ${dc}">${state.drinksThisWeek}</span><span class="tof"> / 1 MAX</span></div>
         <div class="cbtns">
@@ -695,14 +802,73 @@ function changeP(d,evt){
   if(state.priusCount>old && evt) xpPop(200,evt.clientX,evt.clientY);
   save(); checkAchs(); if(state.priusCount>old) checkLvlUp(oldXP,calcXP()); render();
 }
-function changeD(d){ state.drinksThisWeek=Math.max(0,state.drinksThisWeek+d); save(); render(); }
-function changeW(d){ state.workoutsThisWeek=Math.max(0,Math.min(7,state.workoutsThisWeek+d)); save(); checkAchs(); render(); }
-
-function resetWeekly(){
-  if(state.drinksThisWeek===0) state.cleanWeeks=(state.cleanWeeks||0)+1;
-  state.drinksThisWeek=0; state.workoutsThisWeek=0;
+function changeD(d){
+  const oldXP=calcXP();
+  const old=state.drinksThisWeek;
+  state.drinksThisWeek=Math.max(0,state.drinksThisWeek+d);
+  // Gain XP for clean days (Mon-Thu), lose XP for extra drink days
+  if(d>0 && state.drinksThisWeek>1){
+    state.bonusXP=(state.bonusXP||0)-50;
+    xpPopCenter('-50 XP DISCIPLINE BREACH');
+  } else if(d<0 && old>1){
+    state.bonusXP=(state.bonusXP||0)+50;
+  }
+  save(); render();
+}
+function changeW(d){
+  const oldXP=calcXP();
+  const old=state.workoutsThisWeek;
+  state.workoutsThisWeek=Math.max(0,Math.min(7,state.workoutsThisWeek+d));
+  if(d>0 && state.workoutsThisWeek>old){
+    state.bonusXP=(state.bonusXP||0)+30;
+    xpPopCenter('+30 XP BODY PROTOCOL');
+    checkLvlUp(oldXP,calcXP());
+  } else if(d<0 && state.workoutsThisWeek<old){
+    state.bonusXP=Math.max(0,(state.bonusXP||0)-30);
+  }
   save(); checkAchs(); render();
 }
+
+function xpPopCenter(msg){
+  const el=document.createElement('div');
+  el.className='xp-pop';
+  el.textContent=msg;
+  el.style.left='50%'; el.style.top='40%';
+  el.style.transform='translateX(-50%)';
+  el.style.fontSize='20px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1400);
+}
+
+function resetWeekly(){
+  const oldXP=calcXP();
+  if(state.drinksThisWeek===0){
+    state.cleanWeeks=(state.cleanWeeks||0)+1;
+    state.bonusXP=(state.bonusXP||0)+100;
+    setTimeout(()=>xpPopCenter('+100 XP CLEAN WEEK BONUS'),300);
+  }
+  if(state.workoutsThisWeek>=4){
+    state.bonusXP=(state.bonusXP||0)+50;
+    setTimeout(()=>xpPopCenter('+50 XP FULL WORKOUT WEEK'),700);
+  }
+  state.drinksThisWeek=0; state.workoutsThisWeek=0;
+  save(); checkAchs(); checkLvlUp(oldXP,calcXP()); render();
+}
+function addCustomGoal(){
+  const titleEl=document.getElementById('new-title');
+  const catEl=document.getElementById('new-cat');
+  const qEl=document.getElementById('new-quarter');
+  const title=(titleEl?titleEl.value:'').trim();
+  if(!title) return;
+  const newId=Date.now();
+  state.goals.push({id:newId,cat:catEl?catEl.value:'builds',title,quarter:qEl?qEl.value:'Q2',done:false,notes:'',description:'',log:[]});
+  save(); render();
+  setTimeout(()=>{
+    const el=document.getElementById('new-title');
+    if(el){el.value='';el.focus();}
+  },50);
+}
+
 function resetGoals(){
   if(confirm("WIPE ALL PROGRESS? THIS CANNOT BE UNDONE.")){
     state.goals=JSON.parse(JSON.stringify(GOALS_DEFAULT));
@@ -710,12 +876,29 @@ function resetGoals(){
     save(); render();
   }
 }
-function startNote(id){ editNote=id; render(); setTimeout(()=>{const e=document.getElementById('ni-'+id);if(e)e.focus();},50); }
-function cancelNote(){ editNote=null; render(); }
-function saveNote(id){
-  const e=document.getElementById('ni-'+id);
-  if(e) state.goals=state.goals.map(g=>g.id===id?{...g,notes:e.value}:g);
-  editNote=null; save(); render();
+function goDetail(id){ detailId=id; render(); window.scrollTo(0,0); }
+function goBack(){ detailId=null; render(); }
+function saveDesc(id){
+  const el=document.getElementById('desc-input');
+  if(el) state.goals=state.goals.map(g=>g.id===id?{...g,description:el.value}:g);
+  save(); render();
+}
+function addLog(id){
+  const el=document.getElementById('log-input');
+  if(!el||!el.value.trim()) return;
+  state.goals=state.goals.map(g=>{
+    if(g.id!==id) return g;
+    return {...g,log:[...(g.log||[]),{ts:Date.now(),text:el.value.trim()}]};
+  });
+  save(); render();
+  setTimeout(()=>{ const i=document.getElementById('log-input'); if(i)i.focus(); },50);
+}
+function deleteLog(id,idx){
+  state.goals=state.goals.map(g=>{
+    if(g.id!==id) return g;
+    const log=[...(g.log||[])]; log.splice(idx,1); return {...g,log};
+  });
+  save(); render();
 }
 
 document.getElementById('lvl-up').addEventListener('click',()=>{
