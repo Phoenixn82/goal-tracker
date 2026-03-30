@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#000000"/>
+  <rect x="16" y="16" width="480" height="480" fill="none" stroke="#00ff41" stroke-width="6" rx="4"/>
+  <rect x="30" y="30" width="452" height="452" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.3" rx="2"/>
+  <text x="256" y="190" text-anchor="middle" font-family="monospace,sans-serif" font-size="130" font-weight="bold" fill="#00ff41">PX</text>
+  <text x="256" y="295" text-anchor="middle" font-family="monospace,sans-serif" font-size="64" fill="#00cc33">.EXE</text>
+  <text x="256" y="390" text-anchor="middle" font-family="monospace,sans-serif" font-size="48" fill="#007a1f">2026</text>
+  <line x1="60" y1="320" x2="452" y2="320" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+</svg>

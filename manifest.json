@@ -1,0 +1,19 @@
+{
+  "name": "Phoenix 2026 Mission Control",
+  "short_name": "PHOENIX.EXE",
+  "description": "Goal tracker with RPG level-up system",
+  "start_url": "/goal-tracker/",
+  "scope": "/goal-tracker/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ff41",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

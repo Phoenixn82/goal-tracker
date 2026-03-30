@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PHOENIX.EXE // 2026</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00ff41">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PHOENIX.EXE">
+<link rel="apple-touch-icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#00ff41;--green2:#00cc33;--green3:#007a1f;--green4:#003d0f;
+  --cyan:#00e5ff;--purple:#b400ff;--red:#ff003c;--amber:#ffaa00;
+  --bg:#000;--bg2:#040d04;--bg3:#081408;
+  --glow-sm:0 0 8px #00ff41;
+  --glow-md:0 0 15px #00ff41,0 0 30px #00ff4155;
+  --glow-lg:0 0 20px #00ff41,0 0 40px #00ff41,0 0 80px #00ff4133;
+  --fp:'VT323',monospace;--fm:'Share Tech Mono',monospace;
+  --bc:#00ff4133;--bc2:#00ff4166;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--green);font-family:var(--fm);min-height:100vh;overflow-x:hidden;}
+#rain{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.07;pointer-events:none;}
+.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.13) 2px,rgba(0,0,0,.13) 4px);}
+.shell{position:relative;z-index:2;max-width:820px;margin:0 auto;padding:14px;}
+
+/* HUD */
+.hud{border:1px solid var(--bc2);border-radius:3px;padding:12px 16px;margin-bottom:14px;
+  background:var(--bg2);box-shadow:var(--glow-sm);position:relative;overflow:hidden;}
+.hud::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.hud-title{font-family:var(--fp);font-size:26px;color:var(--green);text-shadow:var(--glow-md);
+  letter-spacing:2px;line-height:1;position:relative;}
+.hud-title::before,.hud-title::after{content:attr(data-text);position:absolute;top:0;left:0;font-family:var(--fp);font-size:inherit;}
+.hud-title::before{color:var(--cyan);animation:g1 5s infinite;opacity:0;}
+.hud-title::after{color:var(--red);animation:g2 5s infinite;opacity:0;}
+@keyframes g1{0%,88%,100%{opacity:0;transform:translateX(0)}89%{opacity:.8;transform:translateX(-3px)}91%{opacity:0}92%{opacity:.5;transform:translateX(2px)}94%{opacity:0}}
+@keyframes g2{0%,88%,100%{opacity:0;transform:translateX(0)}89%{opacity:.8;transform:translateX(3px)}91%{opacity:0}92%{opacity:.5;transform:translateX(-2px)}94%{opacity:0}}
+.hud-sub{font-size:11px;color:var(--green3);margin-bottom:10px;letter-spacing:1px;}
+.player-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.rank-badge{font-family:var(--fp);font-size:14px;color:var(--cyan);text-shadow:0 0 8px var(--cyan);
+  border:1px solid var(--cyan);padding:2px 10px;border-radius:2px;letter-spacing:2px;white-space:nowrap;}
+.level-display{font-family:var(--fp);font-size:24px;color:var(--amber);text-shadow:0 0 10px var(--amber);white-space:nowrap;}
+.xp-section{flex:1;min-width:180px;}
+.xp-label{font-size:10px;color:var(--green3);letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;}
+.xp-bar-outer{height:10px;background:var(--green4);border:1px solid var(--bc2);border-radius:2px;overflow:hidden;position:relative;}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--green3),var(--green));border-radius:2px;
+  transition:width .6s cubic-bezier(.16,1,.3,1);box-shadow:0 0 8px var(--green);position:relative;}
+.xp-bar-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;background:#fff;opacity:.8;box-shadow:0 0 6px #fff;}
+
+/* NAV */
+.nav{display:flex;gap:4px;margin-bottom:14px;}
+.nav-btn{font-family:var(--fp);font-size:18px;padding:8px 20px;background:var(--bg2);
+  border:1px solid var(--bc2);color:var(--green3);cursor:pointer;letter-spacing:2px;
+  transition:all .15s;border-radius:2px;}
+.nav-btn:hover{color:var(--green);border-color:var(--green);box-shadow:var(--glow-sm);}
+.nav-btn.active{color:var(--bg);background:var(--green);border-color:var(--green);box-shadow:var(--glow-md);}
+
+/* PANELS */
+.panel{border:1px solid var(--bc2);background:var(--bg2);border-radius:3px;padding:14px 16px;
+  margin-bottom:12px;position:relative;}
+.panel::before{content:'';position:absolute;top:-1px;left:20px;width:40px;height:2px;
+  background:var(--green);box-shadow:var(--glow-sm);}
+.sec-hdr{font-family:var(--fp);font-size:18px;color:var(--green);letter-spacing:3px;
+  margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--bc);}
+
+/* OVERALL BAR */
+.overall-pct{font-family:var(--fp);font-size:46px;color:var(--green);text-shadow:var(--glow-md);line-height:1;}
+.overall-bar-outer{height:14px;background:var(--green4);border:1px solid var(--bc2);border-radius:2px;overflow:hidden;margin:10px 0 6px;}
+.overall-bar-fill{height:100%;background:linear-gradient(90deg,var(--green4),var(--green));
+  transition:width .8s cubic-bezier(.16,1,.3,1);box-shadow:0 0 12px var(--green);}
+
+/* SECTORS */
+.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:14px;}
+.sector-btn{padding:8px 10px;background:var(--bg2);border:1px solid var(--bc);border-radius:2px;
+  cursor:pointer;text-align:left;font-family:var(--fm);transition:all .15s;}
+.sector-btn:hover{border-color:var(--bc2);background:var(--bg3);}
+.sector-btn.active{border-color:var(--green);box-shadow:0 0 8px #00ff4133;}
+.sector-btn.sweep{border-color:var(--cyan)!important;box-shadow:0 0 8px #00e5ff33!important;}
+.sector-lbl{font-size:10px;color:var(--green3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.sector-count{font-family:var(--fp);font-size:20px;}
+.sector-bar{height:3px;background:var(--green4);border-radius:1px;margin-top:6px;overflow:hidden;}
+.sector-bar-fill{height:100%;border-radius:1px;transition:width .4s ease;}
+
+/* Q FILTER */
+.q-row{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.q-btn{font-family:var(--fp);font-size:15px;padding:4px 14px;background:transparent;
+  border:1px solid var(--bc2);color:var(--green3);cursor:pointer;letter-spacing:1px;
+  border-radius:2px;transition:all .15s;}
+.q-btn:hover{color:var(--green);border-color:var(--green);}
+.q-btn.active{color:var(--bg);background:var(--green2);border-color:var(--green2);}
+
+/* MISSIONS */
+.mission-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  border:1px solid var(--bc);border-radius:2px;margin-bottom:4px;
+  transition:all .2s;position:relative;background:var(--bg2);border-left:3px solid;}
+.mission-item:hover{border-color:var(--bc2);background:var(--bg3);}
+.mission-item.done{opacity:.4;}
+.mission-item.flash{animation:mflash .6s ease;}
+@keyframes mflash{0%{background:var(--green4);box-shadow:0 0 20px var(--green);}100%{background:var(--bg2);box-shadow:none;}}
+.mcheck{width:24px;height:24px;min-width:24px;border:1.5px solid var(--green3);background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--green);
+  font-size:14px;font-family:var(--fp);transition:all .15s;border-radius:2px;margin-top:1px;}
+.mcheck:hover{border-color:var(--green);box-shadow:var(--glow-sm);}
+.mcheck.checked{background:var(--green);border-color:var(--green);color:var(--bg);box-shadow:var(--glow-sm);}
+.mtitle{font-size:14px;font-family:var(--fm);color:var(--green);line-height:1.4;}
+.mtitle.struck{text-decoration:line-through;color:var(--green3);}
+.mmeta{display:flex;gap:6px;margin-top:5px;align-items:center;flex-wrap:wrap;}
+.tag{font-family:var(--fp);font-size:12px;padding:1px 8px;border-radius:2px;letter-spacing:1px;}
+.tag-sec{background:transparent;border:1px solid var(--bc2);color:var(--green3);}
+.tag-q{background:#001a33;border:1px solid #0055aa;color:#4499ff;}
+.tag-og{background:#1a0a00;border:1px solid #aa5500;color:#ffaa44;}
+.tag-xp{background:#001a00;border:1px solid #00aa33;color:var(--green);font-size:11px;}
+.mnote{font-size:11px;color:var(--green3);font-style:italic;margin-top:3px;}
+.note-btn{font-size:10px;color:var(--green3);background:none;border:none;cursor:pointer;
+  text-decoration:underline;font-family:var(--fm);letter-spacing:1px;}
+.note-edit{display:flex;gap:6px;margin-top:6px;}
+.note-edit input{flex:1;font-size:12px;padding:4px 8px;background:var(--bg);color:var(--green);
+  border:1px solid var(--bc2);border-radius:2px;font-family:var(--fm);}
+.note-edit input:focus{outline:none;border-color:var(--green);box-shadow:var(--glow-sm);}
+.note-edit button{font-size:11px;padding:3px 10px;background:transparent;border:1px solid var(--bc2);
+  color:var(--green3);cursor:pointer;font-family:var(--fm);border-radius:2px;letter-spacing:1px;}
+.note-edit button:hover{border-color:var(--green);color:var(--green);}
+
+/* SCHEDULE */
+.sched-day{border:1px solid var(--bc);border-radius:2px;overflow:hidden;margin-bottom:8px;background:var(--bg2);}
+.sched-hdr{padding:8px 14px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--bc);gap:8px;flex-wrap:wrap;}
+.sched-dayname{font-family:var(--fp);font-size:20px;color:var(--green);letter-spacing:2px;}
+.sched-badge{font-family:var(--fp);font-size:13px;padding:2px 10px;border-radius:2px;letter-spacing:1px;}
+.sched-shift{font-size:11px;color:var(--green3);letter-spacing:1px;margin-left:auto;}
+.sched-blocks{padding:6px 14px 10px;}
+.sched-block{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid rgba(0,255,65,.04);}
+.sched-time{font-size:11px;color:var(--green3);min-width:110px;flex-shrink:0;letter-spacing:.5px;}
+.sched-lbl{font-size:12px;display:flex;align-items:center;gap:8px;color:var(--green2);}
+.sched-dot{width:6px;height:6px;border-radius:1px;flex-shrink:0;}
+.rules-panel{border:1px solid var(--bc);background:var(--bg2);padding:12px 14px;border-radius:2px;margin-top:12px;}
+.rules-panel h3{font-family:var(--fp);font-size:16px;color:var(--green);letter-spacing:2px;margin-bottom:8px;}
+.rules-panel p{font-size:12px;color:var(--green3);line-height:2;letter-spacing:.5px;}
+
+/* TRACKERS */
+.tracker-panel{border:1px solid var(--bc2);background:var(--bg2);border-radius:2px;padding:14px 16px;margin-bottom:10px;}
+.tlabel{font-size:11px;color:var(--green3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.tracker-row{display:flex;justify-content:space-between;align-items:center;}
+.tval{font-family:var(--fp);font-size:44px;line-height:1;}
+.tof{font-size:16px;color:var(--green3);}
+.cbtns{display:flex;gap:8px;}
+.cbtn{width:42px;height:42px;border-radius:2px;border:1px solid var(--bc2);background:transparent;
+  cursor:pointer;font-family:var(--fp);font-size:28px;color:var(--green);
+  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cbtn:hover{border-color:var(--green);box-shadow:var(--glow-sm);background:var(--green4);}
+.cbtn:active{transform:scale(.92);}
+.pip-row{display:flex;gap:5px;margin-top:10px;}
+.pip{flex:1;height:8px;border-radius:1px;background:var(--green4);border:1px solid var(--bc);transition:all .3s;}
+.pip.on{background:var(--green);box-shadow:0 0 6px var(--green);border-color:var(--green);}
+.pip.amber{background:var(--amber)!important;box-shadow:0 0 6px var(--amber)!important;border-color:var(--amber)!important;}
+.pip.red{background:var(--red)!important;box-shadow:0 0 6px var(--red)!important;border-color:var(--red)!important;}
+.salert{font-family:var(--fp);font-size:14px;letter-spacing:2px;padding:6px 10px;border-radius:2px;margin-top:8px;}
+.s-ok{background:#001a08;border:1px solid var(--green3);color:var(--green2);}
+.s-warn{background:#1a0e00;border:1px solid var(--amber);color:var(--amber);}
+.s-bad{background:#1a0005;border:1px solid var(--red);color:var(--red);}
+.action-btn{display:block;width:100%;margin-top:10px;padding:10px;background:transparent;
+  border:1px solid var(--bc2);color:var(--green3);font-family:var(--fp);font-size:16px;
+  letter-spacing:2px;cursor:pointer;border-radius:2px;transition:all .15s;}
+.action-btn:hover{border-color:var(--green);color:var(--green);box-shadow:var(--glow-sm);}
+.danger-btn{display:block;margin:20px auto;font-family:var(--fm);font-size:11px;color:var(--green3);
+  background:none;border:none;cursor:pointer;text-decoration:underline;letter-spacing:1px;}
+.danger-btn:hover{color:var(--red);}
+.empty-state{padding:3rem;text-align:center;color:var(--green3);font-family:var(--fp);font-size:20px;letter-spacing:2px;}
+
+/* LEVEL UP OVERLAY */
+#lvl-up{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.93);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;}
+#lvl-up.show{opacity:1;pointer-events:all;}
+.lu-inner{text-align:center;animation:luPop .5s ease;}
+@keyframes luPop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+.lu-sys{font-family:var(--fp);font-size:13px;color:var(--green3);letter-spacing:4px;margin-bottom:6px;}
+.lu-big{font-family:var(--fp);font-size:72px;color:var(--green);text-shadow:var(--glow-lg);letter-spacing:4px;line-height:1;margin-bottom:10px;}
+.lu-rank{font-family:var(--fp);font-size:30px;color:var(--cyan);text-shadow:0 0 20px var(--cyan);letter-spacing:4px;margin-bottom:10px;}
+.lu-xp{font-family:var(--fp);font-size:18px;color:var(--amber);text-shadow:0 0 10px var(--amber);letter-spacing:2px;margin-bottom:28px;}
+.lu-hint{font-size:12px;color:var(--green3);letter-spacing:2px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* XP POPUP */
+.xp-pop{position:fixed;z-index:50;font-family:var(--fp);font-size:22px;color:var(--green);
+  text-shadow:var(--glow-md);pointer-events:none;animation:xpFloat 1.2s ease forwards;}
+@keyframes xpFloat{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-80px);opacity:0}}
+
+/* ACHIEVEMENT TOAST */
+#ach-toast{position:fixed;bottom:20px;right:20px;z-index:60;border:1px solid var(--cyan);
+  background:#000a0d;padding:12px 18px;border-radius:3px;box-shadow:0 0 20px #00e5ff33;
+  min-width:200px;transform:translateX(300px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1);}
+#ach-toast.show{transform:translateX(0);opacity:1;}
+.ach-lbl{font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:4px;font-family:var(--fp);}
+.ach-name{font-family:var(--fp);font-size:18px;color:var(--cyan);text-shadow:0 0 8px var(--cyan);letter-spacing:1px;}
+
+@media(max-width:500px){
+  .sector-grid{grid-template-columns:repeat(2,1fr);}
+  .sched-time{min-width:80px;font-size:10px;}
+  .hud-title{font-size:18px;}
+  .overall-pct{font-size:36px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="rain"></canvas>
+<div class="scanlines"></div>
+
+<div id="lvl-up">
+  <div class="lu-inner">
+    <div class="lu-sys">// SYSTEM MESSAGE //</div>
+    <div class="lu-big">LEVEL UP!</div>
+    <div class="lu-rank" id="lu-rank"></div>
+    <div class="lu-xp" id="lu-xp"></div>
+    <div class="lu-hint">[ CLICK TO CONTINUE ]</div>
+  </div>
+</div>
+
+<div id="ach-toast">
+  <div class="ach-lbl">ACHIEVEMENT UNLOCKED</div>
+  <div class="ach-name" id="ach-name"></div>
+</div>
+
+<div class="shell">
+  <div class="hud">
+    <div class="hud-title" data-text="PHOENIX.EXE // 2026 MISSION CONTROL">PHOENIX.EXE // 2026 MISSION CONTROL</div>
+    <div class="hud-sub">STACK EVERYTHING. LET NOTHING SLIDE. GO HARD.</div>
+    <div class="player-row">
+      <div class="rank-badge" id="rank-badge">GHOST IN THE SHELL</div>
+      <div class="level-display" id="level-disp">LV.1</div>
+      <div class="xp-section">
+        <div class="xp-label"><span>XP PROGRESS</span><span id="xp-val">0 / 200 XP</span></div>
+        <div class="xp-bar-outer"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav" id="nav"></div>
+  <div id="app"></div>
+</div>
+
+<script>
+const SK = "phoenix-goals-2026-v4";
+
+const LEVELS = [
+  {lv:1,min:0,   max:200,  rank:"GHOST IN THE SHELL"},
+  {lv:2,min:200, max:500,  rank:"AWAKENING"},
+  {lv:3,min:500, max:900,  rank:"OPERATOR"},
+  {lv:4,min:900, max:1400, rank:"AGENT HUNTER"},
+  {lv:5,min:1400,max:2000, rank:"SYSTEM HACKER"},
+  {lv:6,min:2000,max:2700, rank:"PHANTOM PROTOCOL"},
+  {lv:7,min:2700,max:3600, rank:"THE ARCHITECT"},
+  {lv:8,min:3600,max:5000, rank:"NEO"},
+  {lv:9,min:5000,max:9999, rank:"THE ONE"},
+];
+
+const CATS = [
+  {id:"builds",   label:"Builds",    color:"#ff6030"},
+  {id:"business", label:"Business",  color:"#00cc66"},
+  {id:"career",   label:"Career",    color:"#3399ff"},
+  {id:"finance",  label:"Finance",   color:"#88cc00"},
+  {id:"adventure",label:"Adventure", color:"#aa44ff"},
+  {id:"health",   label:"Health",    color:"#ff4488"},
+  {id:"social",   label:"Network",   color:"#ffaa00"},
+  {id:"discipline",label:"Discipline",color:"#00cccc"},
+];
+
+const ACHIEVEMENTS = [
+  {id:"first",   title:"FIRST BLOOD",       check:s=>s.goals.filter(g=>g.done).length>=1},
+  {id:"ten",     title:"MOMENTUM ONLINE",   check:s=>s.goals.filter(g=>g.done).length>=10},
+  {id:"twenty",  title:"NO STOPPING NOW",   check:s=>s.goals.filter(g=>g.done).length>=20},
+  {id:"all",     title:"THE ONE",           check:s=>s.goals.every(g=>g.done)},
+  {id:"sector",  title:"SECTOR CLEARED",    check:s=>CATS.some(c=>s.goals.filter(g=>g.cat===c.id).every(g=>g.done))},
+  {id:"prius5",  title:"DEAL MACHINE",      check:s=>s.priusCount>=5},
+  {id:"prius10", title:"SALES GOD",         check:s=>s.priusCount>=10},
+  {id:"fit",     title:"BODY ONLINE",       check:s=>s.workoutsThisWeek>=4},
+  {id:"clean",   title:"CLEAN PROTOCOL",    check:s=>s.cleanWeeks>=1},
+];
+
+const GOALS_DEFAULT = [
+  {id:1, cat:"builds",   title:"Get four-wheeler running",                quarter:"Q2",done:false,notes:""},
+  {id:2, cat:"builds",   title:"Get dirt bike running",                   quarter:"Q2",done:false,notes:""},
+  {id:3, cat:"builds",   title:"Build plasma CNC table",                  quarter:"Q2",done:false,notes:"Needed before Bronco fab work"},
+  {id:4, cat:"builds",   title:"Level up 3D printing skills",             quarter:"Q2",done:false,notes:""},
+  {id:5, cat:"builds",   title:"Bronco: source coyote motor + trans",     quarter:"Q3",done:false,notes:"Full-size 78-96, 4R70W or 6R80"},
+  {id:31,cat:"builds",   title:"Bronco: CNC-cut motor mounts & crossmember",quarter:"Q3",done:false,notes:"First real CNC project"},
+  {id:32,cat:"builds",   title:"Bronco: wiring harness, ECU, fuel system",quarter:"Q3",done:false,notes:""},
+  {id:33,cat:"builds",   title:"Bronco: complete swap & first start",     quarter:"Q4",done:false,notes:""},
+  {id:34,cat:"builds",   title:"Bronco: driveshaft, cooling, exhaust, tuning",quarter:"Q4",done:false,notes:""},
+  {id:6, cat:"business", title:"Sell 10+ Priuses this year",              quarter:"ALL",done:false,notes:""},
+  {id:7, cat:"business", title:"Build AI sourcing dashboard (FB scraper)",quarter:"Q2",done:false,notes:""},
+  {id:8, cat:"business", title:"Build AI negotiation chatbot layer",      quarter:"Q3",done:false,notes:""},
+  {id:9, cat:"business", title:"Rank for 'sell my hybrid online' SEO",    quarter:"Q3",done:false,notes:""},
+  {id:10,cat:"business", title:"Launch 'Sell Your Car' page on site",     quarter:"Q2",done:false,notes:""},
+  {id:35,cat:"business", title:"Launch overlanding CNC products site",    quarter:"Q4",done:false,notes:"Skid plates, bumper kits, mounts"},
+  {id:36,cat:"business", title:"Design first 3 overlanding products",     quarter:"Q4",done:false,notes:"Document Bronco build for content"},
+  {id:37,cat:"business", title:"Set up pickup driver network (ATX, SA, DFW)",quarter:"Q2",done:false,notes:"Flat fee per trip"},
+  {id:11,cat:"career",   title:"CompTIA Network+",                        quarter:"Q2",done:false,notes:""},
+  {id:12,cat:"career",   title:"CompTIA Security+",                       quarter:"Q3",done:false,notes:""},
+  {id:13,cat:"career",   title:"Cisco CCNA",                              quarter:"Q4",done:false,notes:""},
+  {id:14,cat:"career",   title:"Master Power Automate",                   quarter:"Q2",done:false,notes:"Discover Woodforest workflows"},
+  {id:15,cat:"career",   title:"Automate 3+ processes at Woodforest",     quarter:"Q3",done:false,notes:""},
+  {id:16,cat:"finance",  title:"Set up and stick to monthly budget",      quarter:"Q1",done:false,notes:""},
+  {id:17,cat:"finance",  title:"Track all expenses weekly",               quarter:"ALL",done:false,notes:""},
+  {id:18,cat:"finance",  title:"Build emergency fund target",             quarter:"Q4",done:false,notes:""},
+  {id:19,cat:"adventure",title:"Buy camper trailer",                      quarter:"Q2",done:false,notes:""},
+  {id:20,cat:"adventure",title:"Oregon trip",                             quarter:"Q3",done:false,notes:"Summer: June-August"},
+  {id:21,cat:"health",   title:"HOTWORX 3-4x per week consistently",      quarter:"ALL",done:false,notes:"Morning sessions before work"},
+  {id:22,cat:"health",   title:"Hit target weight / body comp goal",      quarter:"Q4",done:false,notes:""},
+  {id:23,cat:"health",   title:"Drastically improve sleep quality",       quarter:"Q2",done:false,notes:""},
+  {id:24,cat:"health",   title:"Sunday meal prep habit for work lunches", quarter:"Q1",done:false,notes:"Batch cook under 1 hour"},
+  {id:25,cat:"health",   title:"No weekday drinking — weekends only",     quarter:"Q2",done:false,notes:"Phase 2: once every 2 weeks"},
+  {id:26,cat:"health",   title:"Cut drinking to once every 2 weeks",      quarter:"Q4",done:false,notes:""},
+  {id:27,cat:"social",   title:"Attend 1 industry event per quarter",     quarter:"ALL",done:false,notes:"Tech, auto, or maker/fab"},
+  {id:28,cat:"social",   title:"Build 5+ meaningful industry connections",quarter:"Q4",done:false,notes:""},
+  {id:29,cat:"discipline",title:"Create and follow daily schedule",       quarter:"Q1",done:false,notes:""},
+  {id:30,cat:"discipline",title:"Weekly review habit (every Sunday)",     quarter:"ALL",done:false,notes:""},
+];
+
+const SCHEDULE = [
+  {day:"MONDAY",   type:"work",   shift:"10 AM – 9 PM",blocks:[
+    {time:"Morning",     label:"HOTWORX session",                     color:"#ff4488"},
+    {time:"Pre-shift",   label:"Open block — project/study/errands",  color:"#3399ff"},
+    {time:"10AM – ~7PM", label:"Woodforest (active)",                 color:"#666"},
+    {time:"~7 – 9 PM",   label:"Downtime → cert studying",           color:"#3399ff"},
+    {time:"After shift", label:"Wind down, protect sleep",            color:"#aa44ff"},
+  ]},
+  {day:"TUESDAY",  type:"work",   shift:"10 AM – 9 PM",blocks:[
+    {time:"Morning",     label:"HOTWORX session",                     color:"#ff4488"},
+    {time:"Pre-shift",   label:"Open block — project/study/errands",  color:"#3399ff"},
+    {time:"10AM – ~7PM", label:"Woodforest (active)",                 color:"#666"},
+    {time:"~7 – 9 PM",   label:"Downtime → cert studying",           color:"#3399ff"},
+    {time:"After shift", label:"Wind down, protect sleep",            color:"#aa44ff"},
+  ]},
+  {day:"WEDNESDAY",type:"work",   shift:"10 AM – 9 PM",blocks:[
+    {time:"Morning",     label:"Rest morning (no HOTWORX)",           color:"#00cc66"},
+    {time:"Pre-shift",   label:"Open block — project/study/errands",  color:"#3399ff"},
+    {time:"10AM – ~7PM", label:"Woodforest (active)",                 color:"#666"},
+    {time:"~7 – 9 PM",   label:"Downtime → cert studying",           color:"#3399ff"},
+    {time:"After shift", label:"Wind down, protect sleep",            color:"#aa44ff"},
+  ]},
+  {day:"THURSDAY", type:"work",   shift:"8 AM – 7 PM",blocks:[
+    {time:"Early AM",    label:"HOTWORX session",                     color:"#ff4488"},
+    {time:"8AM – 7PM",   label:"Woodforest shift (shorter day)",      color:"#666"},
+    {time:"Evening",     label:"Free — light project or personal",    color:"#00cc66"},
+    {time:"Night",       label:"Wind down, protect sleep",            color:"#aa44ff"},
+  ]},
+  {day:"FRIDAY",   type:"flex",   shift:"Off — flexible",blocks:[
+    {time:"Morning",     label:"HOTWORX (optional 4th session)",      color:"#ff4488"},
+    {time:"Daytime",     label:"FLEX: tech work, car pickup, personal",color:"#ffaa00"},
+    {time:"Note",        label:"If a car deal drops, this absorbs it",color:"#00cc66"},
+    {time:"Evening",     label:"Free — social, relax, recharge",      color:"#aa44ff"},
+  ]},
+  {day:"SATURDAY", type:"manual", shift:"Hands-on day",blocks:[
+    {time:"Morning",     label:"Morning routine",                     color:"#00cc66"},
+    {time:"Daytime",     label:"FLEX: builds, car pickup, home",      color:"#ff6030"},
+    {time:"Note",        label:"Bronco, CNC — whatever's priority",  color:"#00cc66"},
+    {time:"Evening",     label:"Free (weekend drink day if chosen)",  color:"#aa44ff"},
+  ]},
+  {day:"SUNDAY",   type:"prep",   shift:"Prep & reset",blocks:[
+    {time:"Morning",     label:"Slow start, morning routine",         color:"#00cc66"},
+    {time:"Mid-morning", label:"Meal prep for the week (~1 hr)",      color:"#88cc00"},
+    {time:"Daytime",     label:"FLEX: shop time, car biz, overflow",  color:"#ff6030"},
+    {time:"Afternoon",   label:"Weekly review: goals, budget, reset", color:"#666"},
+    {time:"Evening",     label:"Wind down, prep for Monday",          color:"#aa44ff"},
+  ]},
+];
+
+const TYPE_C = {work:"#888",flex:"#ffaa00",manual:"#ff6030",prep:"#88cc00"};
+const TYPE_L = {work:"WORK DAY",flex:"FLEX DAY",manual:"HANDS-ON",prep:"PREP+RESET"};
+
+// ── STATE ──
+let state = {
+  goals:GOALS_DEFAULT, priusCount:0, drinksThisWeek:0, workoutsThisWeek:0,
+  bonusXP:0, achievements:[], cleanWeeks:0,
+};
+let view="goals", catF="all", qF="ALL", editNote=null;
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SK));
+    if (d) state = {...state,...d};
+  } catch(e){}
+  // migrate v3
+  try {
+    if (!localStorage.getItem(SK)) {
+      const old = JSON.parse(localStorage.getItem("phoenix-goals-2026-v3"));
+      if (old) { state = {...state,...old, bonusXP:0, achievements:[], cleanWeeks:0}; save(); }
+    }
+  } catch(e){}
+}
+function save() { try{localStorage.setItem(SK,JSON.stringify(state));}catch(e){} }
+
+// ── XP / LEVEL ──
+function calcXP() {
+  return state.goals.filter(g=>g.done).length * 100
+    + state.priusCount * 200
+    + (state.bonusXP||0);
+}
+function getLvl(xp) {
+  let l = LEVELS[0];
+  for (const x of LEVELS) if (xp>=x.min) l=x;
+  return l;
+}
+function updateHUD() {
+  const xp = calcXP();
+  const l = getLvl(xp);
+  const next = LEVELS.find(x=>x.lv===l.lv+1);
+  const pct = next ? ((xp-l.min)/(l.max-l.min))*100 : 100;
+  document.getElementById('rank-badge').textContent = l.rank;
+  document.getElementById('level-disp').textContent = `LV.${l.lv}`;
+  document.getElementById('xp-bar').style.width = Math.min(100,pct)+'%';
+  document.getElementById('xp-val').textContent = next ? `${xp} / ${l.max} XP` : `${xp} XP — MAX`;
+}
+function checkLvlUp(oldXP, newXP) {
+  const o = getLvl(oldXP), n = getLvl(newXP);
+  if (n.lv > o.lv) {
+    document.getElementById('lu-rank').textContent = n.rank;
+    document.getElementById('lu-xp').textContent = `${newXP} XP TOTAL`;
+    document.getElementById('lvl-up').classList.add('show');
+  }
+}
+
+// ── ACHIEVEMENTS ──
+let achT = null;
+function checkAchs() {
+  for (const a of ACHIEVEMENTS) {
+    if (state.achievements.includes(a.id)) continue;
+    if (a.check(state)) {
+      state.achievements.push(a.id);
+      showAch(a.title);
+    }
+  }
+}
+function showAch(title) {
+  document.getElementById('ach-name').textContent = title;
+  const t = document.getElementById('ach-toast');
+  t.classList.add('show');
+  if (achT) clearTimeout(achT);
+  achT = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ── XP POPUP ──
+function xpPop(amt, x, y) {
+  const el = document.createElement('div');
+  el.className = 'xp-pop';
+  el.textContent = typeof amt==='number' ? `+${amt} XP` : `+${amt}`;
+  el.style.left = (x-40)+'px';
+  el.style.top = (y-20)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1200);
+}
+
+// ── MATRIX RAIN ──
+(function(){
+  const c = document.getElementById('rain');
+  const ctx = c.getContext('2d');
+  const ch = 'アイウエオカキクケコサシスセソタチツテトナニヌハヒフヘホラリルレロ0123456789ABCDEFGHIJKLMNOPQRST@#$%&*<>/\\|';
+  let cols, drops;
+  function resize(){ c.width=innerWidth; c.height=innerHeight; cols=Math.floor(c.width/16); drops=Array(cols).fill(1); }
+  function draw(){
+    ctx.fillStyle='rgba(0,0,0,.05)'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff41'; ctx.font='14px monospace';
+    for(let i=0;i<drops.length;i++){
+      ctx.fillText(ch[Math.floor(Math.random()*ch.length)],i*16,drops[i]*16);
+      if(drops[i]*16>c.height && Math.random()>.975) drops[i]=0;
+      drops[i]++;
+    }
+  }
+  resize(); addEventListener('resize',resize); setInterval(draw,50);
+})();
+
+// ── UTILS ──
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ── RENDER ──
+function renderNav(){
+  document.getElementById('nav').innerHTML = [
+    ["goals","MISSIONS"],["schedule","WEEKLY OPS"],["trackers","INTEL"]
+  ].map(([k,l])=>`<button class="nav-btn ${view===k?'active':''}" onclick="switchView('${k}')">${l}</button>`).join('');
+}
+function switchView(v){ view=v; renderNav(); render(); }
+function render(){
+  const app = document.getElementById('app');
+  if(view==='goals') renderGoals(app);
+  else if(view==='schedule') renderSchedule(app);
+  else renderTrackers(app);
+  updateHUD();
+}
+
+// ── GOALS ──
+function renderGoals(app){
+  const total=state.goals.length, done=state.goals.filter(g=>g.done).length;
+  const pct=Math.round(done/total*100);
+  const catCounts=CATS.map(c=>{
+    const cg=state.goals.filter(g=>g.cat===c.id);
+    return {...c,total:cg.length,done:cg.filter(g=>g.done).length};
+  });
+  const filtered=state.goals.filter(g=>{
+    if(catF!=="all" && g.cat!==catF) return false;
+    if(qF!=="ALL" && g.quarter!==qF && g.quarter!=="ALL") return false;
+    return true;
+  });
+
+  let html = `
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--green3);letter-spacing:2px">MISSION COMPLETION</span>
+        <span class="overall-pct">${pct}%</span>
+      </div>
+      <div class="overall-bar-outer"><div class="overall-bar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:11px;color:var(--green3);margin-top:6px;letter-spacing:1px">${done} / ${total} COMPLETE &nbsp;// &nbsp;${total-done} REMAINING &nbsp;// &nbsp;${calcXP()} XP EARNED</div>
+    </div>
+
+    <div class="sec-hdr">// SECTOR SELECT</div>
+    <div class="sector-grid">
+      ${catCounts.map(c=>{
+        const sp=c.total?Math.round(c.done/c.total*100):0;
+        const sw=c.done===c.total&&c.total>0;
+        return `<button class="sector-btn ${catF===c.id?'active':''} ${sw?'sweep':''}" onclick="toggleCat('${c.id}')">
+          <div class="sector-lbl">${esc(c.label.toUpperCase())}</div>
+          <div class="sector-count" style="color:${c.color};text-shadow:0 0 8px ${c.color}">${c.done}/${c.total}</div>
+          <div class="sector-bar"><div class="sector-bar-fill" style="width:${sp}%;background:${sw?'var(--cyan)':c.color};box-shadow:0 0 6px ${sw?'var(--cyan)':c.color}"></div></div>
+        </button>`;
+      }).join('')}
+    </div>
+
+    <div class="q-row">
+      ${["ALL","Q1","Q2","Q3","Q4"].map(q=>`
+        <button class="q-btn ${qF===q?'active':''}" onclick="toggleQ('${q}')">${q==='ALL'?'ALL QUARTERS':q}</button>
+      `).join('')}
+    </div>
+    <div class="sec-hdr">// ACTIVE MISSIONS <span style="font-size:13px;color:var(--green3)">(${filtered.length} shown)</span></div>
+  `;
+
+  if(!filtered.length){
+    html+=`<div class="empty-state">NO MISSIONS MATCH FILTER</div>`;
+  } else {
+    filtered.forEach(g=>{
+      const cat=CATS.find(c=>c.id===g.cat);
+      const isEd=editNote===g.id;
+      html+=`
+        <div class="mission-item ${g.done?'done':''}" style="border-left-color:${cat?cat.color:'#888'}">
+          <button class="mcheck ${g.done?'checked':''}" onclick="toggleGoal(event,${g.id})">${g.done?'✓':''}</button>
+          <div style="flex:1">
+            <div class="mtitle ${g.done?'struck':''}">${esc(g.title)}</div>
+            <div class="mmeta">
+              <span class="tag tag-sec" style="border-color:${cat?cat.color+'66':'#333'};color:${cat?cat.color:'#888'}">${esc(cat?cat.label.toUpperCase():'?')}</span>
+              <span class="tag ${g.quarter==='ALL'?'tag-og':'tag-q'}">${g.quarter==='ALL'?'ONGOING':g.quarter}</span>
+              ${!g.done?`<span class="tag tag-xp">+100 XP</span>`:''}
+            </div>
+            ${isEd?`
+              <div class="note-edit">
+                <input id="ni-${g.id}" value="${esc(g.notes||'')}" placeholder="ENTER LOG ENTRY..."/>
+                <button onclick="saveNote(${g.id})">SAVE</button>
+                <button onclick="cancelNote()">CANCEL</button>
+              </div>
+            `:`
+              <div style="margin-top:4px;display:flex;align-items:center;gap:6px">
+                ${g.notes?`<span class="mnote">// ${esc(g.notes)}</span>`:''}
+                <button class="note-btn" onclick="startNote(${g.id})">[${g.notes?'EDIT LOG':'ADD LOG'}]</button>
+              </div>
+            `}
+          </div>
+        </div>`;
+    });
+  }
+  html+=`<button class="danger-btn" onclick="resetGoals()">[ WIPE ALL PROGRESS ]</button>`;
+  app.innerHTML=html;
+}
+
+// ── SCHEDULE ──
+function renderSchedule(app){
+  let html=`<div style="font-size:11px;color:var(--green3);letter-spacing:2px;margin-bottom:14px">OPERATIONAL TEMPO — BUILT AROUND THE 4-DAY GRIND</div>`;
+  SCHEDULE.forEach(d=>{
+    const tc=TYPE_C[d.type];
+    html+=`
+      <div class="sched-day">
+        <div class="sched-hdr">
+          <span class="sched-dayname">${d.day}</span>
+          <span class="sched-badge" style="background:${tc}22;border:1px solid ${tc}66;color:${tc}">${TYPE_L[d.type]}</span>
+          <span class="sched-shift">${d.shift}</span>
+        </div>
+        <div class="sched-blocks">
+          ${d.blocks.map(b=>`<div class="sched-block"><span class="sched-time">${b.time}</span><span class="sched-lbl"><span class="sched-dot" style="background:${b.color}"></span>${esc(b.label)}</span></div>`).join('')}
+        </div>
+      </div>`;
+  });
+  html+=`<div class="rules-panel"><h3>// STANDING ORDERS</h3><p>
+    ▸ NO ALCOHOL MON-FRI. ONE WEEKEND DAY MAX.<br>
+    ▸ CERT STUDYING DURING WORK DOWNTIME (7-9PM MON-WED).<br>
+    ▸ FRIDAYS ARE FLEX — LIGHT UNLESS A CAR DEAL DROPS.<br>
+    ▸ SAT/SUN: BUILDS, PICKUPS, HOME PROJECTS — WHATEVER'S PRIORITY.<br>
+    ▸ NON-NEGOTIABLE: SUNDAY MEAL PREP + WEEKLY REVIEW. WIND DOWN BY 22:30.
+  </p></div>`;
+  app.innerHTML=html;
+}
+
+// ── TRACKERS ──
+function renderTrackers(app){
+  const wc=state.workoutsThisWeek>=4?'var(--cyan)':state.workoutsThisWeek>=3?'var(--green)':'var(--green3)';
+  const dc=state.drinksThisWeek>1?'var(--red)':state.drinksThisWeek===1?'var(--amber)':'var(--green)';
+  let html=`<div style="font-size:11px;color:var(--green3);letter-spacing:2px;margin-bottom:14px">WEEKLY INTEL — RESET EVERY SUNDAY DURING REVIEW</div>`;
+
+  html+=`
+    <div class="tracker-panel">
+      <div class="tlabel">// HOTWORX SESSIONS THIS WEEK</div>
+      <div class="tracker-row">
+        <div><span class="tval" style="color:${wc};text-shadow:0 0 10px ${wc}">${state.workoutsThisWeek}</span><span class="tof"> / 4 TARGET</span></div>
+        <div class="cbtns">
+          <button class="cbtn" style="color:var(--red);border-color:#ff003c44" onclick="changeW(-1)">−</button>
+          <button class="cbtn" style="color:var(--green);border-color:#00ff4144" onclick="changeW(1)">+</button>
+        </div>
+      </div>
+      <div class="pip-row">${[1,2,3,4].map(n=>`<div class="pip ${n<=state.workoutsThisWeek?'on':''}"></div>`).join('')}</div>
+      ${state.workoutsThisWeek>=4?`<div class="salert s-ok">// OPTIMAL // BODY PROTOCOL ENGAGED</div>`:''}
+    </div>
+
+    <div class="tracker-panel">
+      <div class="tlabel">// DRINKING DAYS THIS WEEK</div>
+      <div class="tracker-row">
+        <div><span class="tval" style="color:${dc};text-shadow:0 0 10px ${dc}">${state.drinksThisWeek}</span><span class="tof"> / 1 MAX</span></div>
+        <div class="cbtns">
+          <button class="cbtn" style="color:var(--red);border-color:#ff003c44" onclick="changeD(-1)">−</button>
+          <button class="cbtn" style="color:var(--green);border-color:#00ff4144" onclick="changeD(1)">+</button>
+        </div>
+      </div>
+      <div class="pip-row">${[1,2,3].map(n=>`<div class="pip ${n<=state.drinksThisWeek?(n>1?'on red':'on amber'):''}"></div>`).join('')}</div>
+      ${state.drinksThisWeek===0?`<div class="salert s-ok">// CLEAN WEEK // DISCIPLINE HOLDING</div>`:''}
+      ${state.drinksThisWeek>1?`<div class="salert s-bad">// LIMIT EXCEEDED // RECALIBRATE</div>`:''}
+    </div>
+
+    <div class="tracker-panel">
+      <div class="tlabel">// PRIUSES SOLD (YEAR TOTAL)</div>
+      <div class="tracker-row">
+        <div><span class="tval" style="color:var(--amber);text-shadow:0 0 10px var(--amber)">${state.priusCount}</span><span class="tof"> / 10 GOAL</span></div>
+        <div class="cbtns">
+          <button class="cbtn" style="color:var(--red);border-color:#ff003c44" onclick="changeP(-1,event)">−</button>
+          <button class="cbtn" style="color:var(--amber);border-color:#ffaa0044" onclick="changeP(1,event)">+</button>
+        </div>
+      </div>
+      <div class="pip-row">${Array.from({length:10},(_,i)=>`<div class="pip ${i<state.priusCount?'on amber':''}"></div>`).join('')}</div>
+      <div style="font-size:11px;color:var(--green3);margin-top:8px;letter-spacing:1px">${Math.round(state.priusCount/10*100)}% TO TARGET // +200 XP PER SALE</div>
+    </div>
+    <button class="action-btn" onclick="resetWeekly()">[ RESET WEEKLY TRACKERS ]</button>`;
+
+  const unlocked = ACHIEVEMENTS.filter(a=>state.achievements.includes(a.id));
+  if(unlocked.length){
+    html+=`<div style="margin-top:16px"><div class="sec-hdr">// ACHIEVEMENTS (${unlocked.length}/${ACHIEVEMENTS.length})</div>`;
+    unlocked.forEach(a=>{
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #00e5ff33;border-radius:2px;margin-bottom:4px;background:var(--bg2)">
+        <span style="color:var(--cyan);text-shadow:0 0 8px var(--cyan);font-size:16px;font-family:var(--fp)">★</span>
+        <div>
+          <div style="font-family:var(--fp);font-size:16px;color:var(--cyan);letter-spacing:1px">${esc(a.title)}</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  app.innerHTML=html;
+}
+
+// ── ACTIONS ──
+function toggleGoal(evt,id){
+  const oldXP=calcXP();
+  const g=state.goals.find(x=>x.id===id);
+  if(!g) return;
+  const completing=!g.done;
+  state.goals=state.goals.map(x=>x.id===id?{...x,done:!x.done}:x);
+  if(completing){
+    xpPop(100,evt.clientX,evt.clientY);
+    const cat=CATS.find(c=>c.id===g.cat);
+    if(cat && state.goals.filter(x=>x.cat===cat.id).every(x=>x.done)){
+      state.bonusXP=(state.bonusXP||0)+500;
+      setTimeout(()=>xpPop('500 SECTOR CLEAR!',evt.clientX,evt.clientY-50),600);
+    }
+    save(); checkAchs(); checkLvlUp(oldXP,calcXP()); render();
+  } else { save(); render(); }
+}
+
+function toggleCat(id){ catF=catF===id?"all":id; render(); }
+function toggleQ(q){ qF=q; render(); }
+
+function changeP(d,evt){
+  const oldXP=calcXP(), old=state.priusCount;
+  state.priusCount=Math.max(0,state.priusCount+d);
+  if(state.priusCount>old && evt) xpPop(200,evt.clientX,evt.clientY);
+  save(); checkAchs(); if(state.priusCount>old) checkLvlUp(oldXP,calcXP()); render();
+}
+function changeD(d){ state.drinksThisWeek=Math.max(0,state.drinksThisWeek+d); save(); render(); }
+function changeW(d){ state.workoutsThisWeek=Math.max(0,Math.min(7,state.workoutsThisWeek+d)); save(); checkAchs(); render(); }
+
+function resetWeekly(){
+  if(state.drinksThisWeek===0) state.cleanWeeks=(state.cleanWeeks||0)+1;
+  state.drinksThisWeek=0; state.workoutsThisWeek=0;
+  save(); checkAchs(); render();
+}
+function resetGoals(){
+  if(confirm("WIPE ALL PROGRESS? THIS CANNOT BE UNDONE.")){
+    state.goals=JSON.parse(JSON.stringify(GOALS_DEFAULT));
+    state.priusCount=0; state.bonusXP=0; state.achievements=[]; state.cleanWeeks=0;
+    save(); render();
+  }
+}
+function startNote(id){ editNote=id; render(); setTimeout(()=>{const e=document.getElementById('ni-'+id);if(e)e.focus();},50); }
+function cancelNote(){ editNote=null; render(); }
+function saveNote(id){
+  const e=document.getElementById('ni-'+id);
+  if(e) state.goals=state.goals.map(g=>g.id===id?{...g,notes:e.value}:g);
+  editNote=null; save(); render();
+}
+
+document.getElementById('lvl-up').addEventListener('click',()=>{
+  document.getElementById('lvl-up').classList.remove('show');
+});
+
+load(); renderNav(); render();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/goal-tracker/sw.js', {scope: '/goal-tracker/'});
+}
+</script>
+</body>
+</html>
